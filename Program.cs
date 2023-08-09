@@ -31,6 +31,12 @@ public static class Program
     }
 
 
+    private static void WaitForBrowser(int milliseconds)
+    {
+        _driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromMilliseconds(milliseconds);
+    }
+
+
     private static Task NavigateRoleTab() => Task.Run(() =>
     {
         // Go roles tab
@@ -77,10 +83,14 @@ public static class Program
             By.XPath("/html/body/div[2]/div[2]/div[1]/div[1]/div/div[2]/div/div/div/div/div[1]/nav/div[1]"))).Result;
         serverDropDown?.Click();
 
+        WaitForBrowser(500);
+
         // navigate to settings
         var buttonContainer = _driver.FindElement(By.XPath("/html/body/div[2]/div[2]/div[1]/div[3]/div/div/div/div/div[3]"));
         var button = buttonContainer.FindElement(By.Id("guild-header-popout-settings"));
         button.Click();
+
+        WaitForBrowser(500);
     }
 
     /// <summary>
@@ -99,6 +109,7 @@ public static class Program
             throw new ArgumentNullException();
 
         // Fetch all servers out of the folders
+        WaitForBrowser(500);
         foreach (var folder in folders)
         {
             folder.Click();
