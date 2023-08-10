@@ -2,27 +2,33 @@
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.DevTools.V113.Network;
+using OpenQA.Selenium.Interactions;
 using OpenQA.Selenium.Support.UI;
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
+using System.Drawing;
 using System.Timers;
 
 
 public static class Program
 {
+    private const int WaitForUITime = 300;
+    private static void WaitForUI() => Thread.Sleep(WaitForUITime);
+
     private static IWebDriver _driver = new ChromeDriver();
 
 
     public static async Task Main(string[] args)
     {
         OpenDiscord();
-        
-        Console.WriteLine("Enter the name of your server: ");
+
         await NavigateToServer("Autismus Clan"/*Console.ReadLine() ?? ""*/);
 
         NavigateServerSettings();
         
         await NavigateRoleTab();
+
+        CreateRole("Test", "#850b0b");
 
 
         Console.WriteLine("Application finished executing. (Press any key to exit)");
@@ -30,32 +36,93 @@ public static class Program
         _driver.Dispose();
     }
 
-
-    private static void WaitForBrowser(int milliseconds)
-    {
-        _driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromMilliseconds(milliseconds);
-    }
-
-
     private static Task NavigateRoleTab() => Task.Run(() =>
     {
         // Go roles tab
         _driver.FindElement(By.XPath("/html/body/div[2]/div[2]/div[1]/div[1]/div/div[2]/div[2]/div/div/div[1]/div/nav/div/div[3]"))
             .Click();
 
+        WaitForUI();
+
         // Go Role manager button
         _driver.FindElement(By.XPath("/html/body/div[2]/div[2]/div[1]/div[1]/div/div[2]/div[2]/div/div/div[2]/div/div/div[1]/div/div/div/div/div[2]/div[3]/div/button"))
             .Click();
 
+        WaitForUI();
+
         // delete new role that was created from discord 
-        var list = _driver.FindElement(By.XPath("/html/body/div[2]/div[2]/div[1]/div[1]/div/div[2]/div[2]/div/div/div[2]/div/div/div[1]/div/div[1]/div/div[2]/div[1]"))
+        //while (TryGetNewRole(out IWebElement? element))
+        //    if (element is not null)
+        //        DeleteRole(element);
+    });
+
+    private static IEnumerable<IWebElement> GetAllRoles() => 
+        _driver.FindElement(By.XPath("/html/body/div[2]/div[2]/div[1]/div[1]/div/div[2]/div[2]/div/div/div[2]/div/div/div[1]/div/div[1]/div/div[2]/div[1]"))
             .FindElements(By.TagName("div"));
 
-        foreach (var item in list)
+    private static IWebElement GetNewRole()
+    {
+        return GetAllRoles().Where(item => item.GetAttribute("aria-label") == "neue Rolle").First();
+    }
+    private static bool TryGetNewRole(out IWebElement? role)
+    {
+        try
         {
-            Console.WriteLine($"{item.GetAttribute("aria-label")}");
+            role = GetNewRole();
+            return true;
         }
-    });
+        catch 
+        {
+            role = null;
+            return false; 
+        }
+    }
+
+    private static void SaveChanges()
+    {
+
+    }
+
+    private static void PickColor(Color color)
+    {
+
+    }
+
+    private static void CreateRole(string name, string color)
+    {
+        // Open the role settings
+        var roleElement = GetNewRole();
+        roleElement.Click();
+
+        var nameElement = _driver.FindElement(By.XPath("/html/body/div[2]/div[2]/div[1]/div[1]/div/div[2]/div[2]/div/div/div[2]/div/div/div[1]/div/div[2]/div/div[1]/div[2]/div/input"));
+        nameElement.Clear();
+        nameElement.SetValue(name);
+
+        var colorPickerElement = _driver.FindElement(By.XPath("/html/body/div[2]/div[2]/div[1]/div[1]/div/div[2]/div[2]/div/div/div[2]/div[1]/div/div[1]/div/div[2]/div/div[1]/div[5]/div[2]/div[2]/div"));
+        colorPickerElement.Click();
+        var colorSetterElement = _driver.FindElement(By.XPath("/html/body/div[2]/div[2]/div[1]/div[3]/div/div/div/div[2]/div/input"));
+        colorSetterElement.Clear();
+        colorSetterElement.SetValue(color);
+    }
+
+    private static void DeleteRole(IWebElement element)
+    {
+        // Bring up popup
+        new Actions(_driver)
+            .ContextClick(element)
+            .Perform();
+        WaitForUI();
+
+        // Click delete
+        _driver.FindElement(By.XPath("/html/body/div[2]/div[2]/div[1]/div[3]/div/div/div/div[4]/div"))
+            .Click();
+        WaitForUI();
+
+        // Confirm deletion
+        _driver.FindElement(By.XPath("/html/body/div[2]/div[2]/div[1]/div[3]/div[2]/div/div/form/div[2]/button[1]"))
+            .Click();
+        WaitForUI();
+    }
 
     private static void OpenDiscord()
     {
@@ -82,15 +149,13 @@ public static class Program
         var serverDropDown = acquirer.AcquireAsync(() =>_driver.FindElement(
             By.XPath("/html/body/div[2]/div[2]/div[1]/div[1]/div/div[2]/div/div/div/div/div[1]/nav/div[1]"))).Result;
         serverDropDown?.Click();
-
-        WaitForBrowser(500);
+        WaitForUI();
 
         // navigate to settings
         var buttonContainer = _driver.FindElement(By.XPath("/html/body/div[2]/div[2]/div[1]/div[3]/div/div/div/div/div[3]"));
         var button = buttonContainer.FindElement(By.Id("guild-header-popout-settings"));
         button.Click();
-
-        WaitForBrowser(500);
+        WaitForUI();
     }
 
     /// <summary>
@@ -108,8 +173,9 @@ public static class Program
         if (folders is null)
             throw new ArgumentNullException();
 
+        WaitForUI();
+
         // Fetch all servers out of the folders
-        WaitForBrowser(500);
         foreach (var folder in folders)
         {
             folder.Click();
@@ -121,7 +187,10 @@ public static class Program
             {
                 string name = server.FindElement(By.ClassName("blobContainer-ikKyFs")).GetAttribute("data-dnd-name");
                 if (name == serverName)
+                {
                     server.Click();
+                    return;
+                }
             }
         }
     }
