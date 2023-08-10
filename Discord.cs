@@ -84,7 +84,7 @@ namespace ImageToDiscordRoles
         /// Login into discord using <paramref name="login"/>
         /// </summary>
         /// <param name="login"></param>
-        public static void Login(Login login)
+        public static async Task Login(Login login)
         {
             // email
             _driver.FindElement(By.Name("email"))
@@ -99,6 +99,9 @@ namespace ImageToDiscordRoles
                 .SendKeys(Keys.Enter);
 
             Console.WriteLine("Login succsesful.");
+
+            // wait for website to load
+            await new Force().AcquireAsync(ServerElement);
         }
 
 
@@ -107,36 +110,15 @@ namespace ImageToDiscordRoles
         /// method to see it.
         /// </summary>
         /// <param name="serverName"></param>
-        public static async void NavigateToServer(string serverName)
+        public static void NavigateToServer(string serverName)
         {
-            // Get folders
-            var serverElement = await new Force().AcquireAsync(DiscordConstants.ServerElement);
-            //Console.WriteLine("Accuired server source");
-            var folders = serverElement?.FindElements(By.ClassName("wrapper-38slSD"));
-
-            if (folders is null)
-                throw new ArgumentNullException();
-
-            WaitForUI();
-
-            // Fetch all servers out of the folders
-            foreach (var folder in folders)
-            {
-                folder.Click();
-                var group = folder.FindElement(By.TagName("ul"));
-                var groupServers = group.FindElements(By.ClassName("listItem-3SmSlK"));
-
-                // Iterate all servers in the folder
-                foreach (var server in groupServers)
-                {
-                    string name = server.FindElement(By.ClassName("blobContainer-ikKyFs")).GetAttribute("data-dnd-name");
-                    if (name == serverName)
-                    {
-                        server.Click();
-                        return;
-                    }
-                }
-            }
+            new Actions(_driver)
+                .KeyDown(Keys.Control)
+                .SendKeys("k")
+                .KeyUp(Keys.Control)
+                .Perform();
+            QuickSwitcher().SendKeys(serverName);
+            QuickSwitcher().SendKeys(Keys.Enter);
         }
 
         public static void CreateNewRole()

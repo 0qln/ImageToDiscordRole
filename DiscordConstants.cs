@@ -79,5 +79,7 @@ namespace ImageToDiscordRoles
             ServerHeaderPopup().FindElement(By.Id("guild-header-popout-settings"));
 
 
+        public static IWebElement QuickSwitcher() =>
+            _driver.FindElement(By.XPath("/html/body/div[2]/div[2]/div[1]/div[3]/div[2]/div/div/div/input"));
     }
 }

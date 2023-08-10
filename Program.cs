@@ -24,9 +24,9 @@ public static class Program
         service.SuppressInitialDiagnosticInformation = true;
         service.HideCommandPromptWindow = true;
 
-        ChromeOptions options = new ChromeOptions { PageLoadStrategy = PageLoadStrategy.Eager };
+        ChromeOptions options = new ChromeOptions { };
+        //options.AddArgument("--headless");
         options.AddArgument("--no-sandbox");
-        options.AddArgument("--headless");
         options.AddArgument("--disable-gpu");
         options.AddArgument("--disable-crash-reporter");
         options.AddArgument("--disable-extensions");
@@ -44,8 +44,9 @@ public static class Program
     {
         await StartUp();
 
-        Login(GatherUserLogin());
-
+        await Login(GatherUserLogin());
+        Console.WriteLine("Continue");
+        
         NavigateToServer("Autismus Clan");
         NavigateToServerSettings();        
         NavigateRoleTab();
