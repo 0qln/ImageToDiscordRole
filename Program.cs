@@ -42,24 +42,36 @@ public static class Program
     
     public static async Task Main(string[] args)
     {
-        await StartUp();
+        try
+        {
+            await StartUp();
 
-        await Login(GatherUserLogin());
-        Console.WriteLine("Continue");
-        
-        NavigateToServer("Autismus Clan");
-        NavigateToServerSettings();        
-        NavigateRoleTab();
-        NavigateToRoll("", true);
+            await Login(GatherUserLogin());
+            Console.WriteLine("Continue");
 
-        //DeleteAllRolesByName("neue Rolle");
-        //for (int i = 0; i < 10;  i++)
-        //{
-        //    await CreateRole(INVISIBLE_CHAR, $"#{i}{i}{i}{i}{i}{i}");
-        //}
+            NavigateToServer("Server von Oq_ djwhkakjd");
+            await NavigateToServerSettings();
+            await NavigateRoleTab();
 
-        Console.WriteLine("Application finished executing. (Press any key to exit)"); Console.Read();
-        Driver.Dispose();
+            Thread.Sleep(1000);
+
+            for (int i = 0; i < 10; i++)
+            {
+                await CreateRole("neue Rolle", "#000000");
+            }
+            await CreateRole("[padding] neue Rolle", "#FFFFFF");
+            await SaveChanges();
+
+            await DeleteAllRolesByName("neue Rolle");
+
+            //DrawImage(new Bitmap(@"D:\Programmmieren\Projects\ImageToDiscordRoles\cat.png"), "Oq_");
+
+            Console.WriteLine("Application finished executing. (Press any key to exit)"); Console.Read();
+        }
+        finally
+        {
+            Driver.Dispose();
+        }
     }
 
 }

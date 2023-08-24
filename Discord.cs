@@ -22,19 +22,18 @@ namespace ImageToDiscordRoles
         /// Expects the discord to be in the role settings.
         /// </summary>
         /// <param name="element"></param>
-        private static void DeleteRole(IWebElement element)
+        private static async void DeleteRole(IWebElement element)
         {
             // Bring up popup
-            var rightClick = new Actions(_driver).ContextClick(element);
-            rightClick.Perform();
+            new Actions(_driver).ContextClick(element).Perform();
 
             // Click delete
-            var delete = new Force().AcquireAsync(DiscordConstants.RoleDeletion).Result;
-            delete?.Click();
+            var e = (await new Force().AcquireAsync(RoleDeletion));
+            Thread.Sleep(100);
+            e.Click();
 
             // Confirm deletion
-            var confirm = new Force().AcquireAsync(DiscordConstants.RoleDeletionConfirmation).Result;
-            confirm?.Click();
+            (await new Force().AcquireAsync(RoleDeletionConfirmation)).Click();
         }
 
 
@@ -45,13 +44,14 @@ namespace ImageToDiscordRoles
         public static Login GatherUserLogin()
         {
             Console.WriteLine("Enter your login: [Email, Password]");
+
             return new Login(
+
                 Email: Console.ReadLine()
                     ?? throw new ArgumentException("Invalid Email"),
 
                 Password: Console.ReadLine()
-                    ?? throw new ArgumentException("Invalid Password")
-            );
+                    ?? throw new ArgumentException("Invalid Password"));
         }
 
 
@@ -60,13 +60,13 @@ namespace ImageToDiscordRoles
         /// Expects the discord to have a server selected.
         /// TOOD: Check for driver state at the start
         /// </summary>
-        public static void NavigateToServerSettings()
+        public static async Task NavigateToServerSettings()
         {
             // open popup
-            new Force().AcquireAsync(ServerHeader).Result?.Click();
+            (await new Force().AcquireAsync(ServerHeader)).Click();
 
             // navigate to settings
-            new Force().AcquireAsync(ServerHeaderPopupSettings).Result?.Click();
+            (await new Force().AcquireAsync(ServerHeaderPopupSettings)).Click();
         }
 
 
@@ -87,16 +87,14 @@ namespace ImageToDiscordRoles
         public static async Task Login(Login login)
         {
             // email
-            _driver.FindElement(By.Name("email"))
-                .SendKeys(login.Email);
+            _driver.FindElement(By.Name("email")).SendKeys(login.Email);
 
             // password
-            _driver.FindElement(By.Name("password"))
-                .SendKeys(login.Password);
+            _driver.FindElement(By.Name("password")).SendKeys(login.Password);
 
             // confirm
-            _driver.FindElement(By.Name("password"))
-                .SendKeys(Keys.Enter);
+            _driver.FindElement(By.Name("password")).SendKeys(Keys.Enter);
+
 
             Console.WriteLine("Login succsesful.");
 
@@ -112,18 +110,9 @@ namespace ImageToDiscordRoles
         /// <param name="serverName"></param>
         public static void NavigateToServer(string serverName)
         {
-            new Actions(_driver)
-                .KeyDown(Keys.Control)
-                .SendKeys("k")
-                .KeyUp(Keys.Control)
-                .Perform();
+            new Actions(_driver).KeyDown(Keys.Control).SendKeys("k").KeyUp(Keys.Control).Perform();
             QuickSwitcher().SendKeys(serverName);
             QuickSwitcher().SendKeys(Keys.Enter);
-        }
-
-        public static void CreateNewRole()
-        {
-            _driver.FindElement(By.XPath("/html/body/div[2]/div[2]/div[1]/div[1]/div/div[2]/div[2]/div/div/div[2]/div/div/div[1]/div/div[1]/div/div[1]/div[2]")).Click();
         }
 
 
@@ -134,55 +123,60 @@ namespace ImageToDiscordRoles
         public static async Task SaveChanges()
         {
             // Save
-            var saveButton = await new Force().AcquireAsync(DiscordConstants.SaveButton);
-            saveButton?.Click();
+            (await new Force().AcquireAsync(SaveButton)).Click();
 
             // Wait until the changes have been saved
-            await new Force { Interval = 100 }.NotAcquireAsync(() =>
-                _driver.FindElement(By.XPath("/html/body/div[2]/div[2]/div[1]/div[1]/div/div[2]/div[2]/div/div/div[2]/div[2]")));
+            await new Force().NotAcquireAsync(SavePopup);
         }
 
-
         /// <summary>
-        /// 
+        /// Expects to be in the role settings
         /// </summary>
         /// <param name="name"></param>
         /// <param name="color"></param>
         /// <returns></returns>
         /// <exception cref="NullReferenceException"></exception>
-        public static async Task CreateRole(string name, string color)
+        public static async Task CreateRole(string name, string color, string? grantToUser = null)
         {
             // Open the role settings
-            CreateNewRole();
+            (await new Force().AcquireAsync(AddRoleButton)).Click();
 
-            var roleSettings =
-                GetOnlyChild(GetOnlyChild(
-
-                _driver.FindElement(By.
-                XPath("/html/body/div[2]/div[2]/div[1]/div[1]/div/div[2]/div[2]/div/div/div[2]/div/div/div[1]/div/div[2]")),
-
-                By.TagName("div")), By.TagName("div"));
-
-
-            var nameElement = _driver.FindElement(By.
-                XPath("/html/body/div[2]/div[2]/div[1]/div[1]/div/div[2]/div[2]/div/div/div[2]/div/div/div[1]/div/div[2]/div/div[1]/div[2]/div/input"));
+            // set name
+            var nameElement = (await new Force().AcquireAsync(RoleSettingsName)).GetFirstChildInput();
+            Thread.Sleep(50);
             nameElement.Clear();
+            Thread.Sleep(50);
             nameElement.SetValue(name);
 
-            WaitForUI(10);
+            // Open color setter
+            (await new Force().AcquireAsync(ColorPicker)).Click();
 
-            var colorPickerElement = await new Force().AcquireAsync(DiscordConstants.ColorPicker);
-            colorPickerElement.Click();
-
-            var colorSetterElement = await new Force().AcquireAsync(() =>
-                _driver.FindElement(By
-                .XPath("/html/body/div[2]/div[2]/div[1]/div[3]/div/div/div/div[2]/div/input")))
-                ?? throw new NullReferenceException();
+            // manage colors
+            var colorSetterElement = await new Force().AcquireAsync(ColorSetterPopup);
             colorSetterElement.Clear();
             colorSetterElement.SetValue(color);
             colorSetterElement.SendKeys(Keys.Enter);
 
-            WaitForUI(10);
+            //await SaveChanges();
+
+            // grant the role immediatly to a user
+            if (grantToUser is not null)
+            {
+                // Go member tab
+                (await new Force().AcquireAsync(RoleSettingsMemberTabFromVisualsTab)).Click();
+
+                // press add
+                (await new Force().AcquireAsync(RoleSettingsMemberTabAdd)).Click();
+
+                // Search for user
+                (await new Force().AcquireAsync(RoleSettingsMemberTabPopupSearchbar)).SendKeys(grantToUser);
+
+                // select first hit
+                (await new Force().AcquireAsync(RoleSettingsMemberTabPopupSearchbarFirstHit)).Click();
+
+                // confirm
+                (await new Force().AcquireAsync(RoleSettingsMemberTabPopupSearchbarConfirm)).Click();
+            }
         }
 
 
@@ -198,14 +192,24 @@ namespace ImageToDiscordRoles
         /// <summary>
         /// Expects to be navigated on the role tab.
         /// </summary>
-        public static void DeleteAllRolesByName(string name)
+        public static async Task DeleteAllRolesByName(string name)
         {
-            while (TryGetRole(name, out IWebElement? element))
-                if (element is not null)
-                    DeleteRole(element);
+
+            while (TryGetRole(name, out Func<IWebElement?> element))
+            {
+                if (element is not null) DeleteRole(element.Invoke());
+
+                //Thread.Sleep(1000);
+
+                await new Force().NotAcquireAsync(element);
+
+                // Wait for element to get deleted
+                //await new Force().NotAcquireAsync(new Func<IWebElement>(() => EnsureElement(element)));
+            }
         }
 
-        public static void NavigateToRoll(string name, bool inverse) => (!inverse
+        public static void NavigateToRoll(string name, bool inverse) 
+            => (!inverse 
                 ? GetRole(name)
 
                 : GetAllRoles().Result
@@ -219,19 +223,64 @@ namespace ImageToDiscordRoles
         /// Navigate to the role tab.
         /// </summary>
         /// <returns></returns>
-        public static void NavigateRoleTab()
+        public static async Task NavigateRoleTab()
         {
             // Go roles tab
-            _driver.FindElement(By.XPath("/html/body/div[2]/div[2]/div[1]/div[1]/div/div[2]/div[2]/div/div/div[1]/div/nav/div/div[3]"))
-                .Click();
-
-            WaitForUI();
+            (await new Force().AcquireAsync(RolesTab)).Click();
 
             // Go Role manager button
-            _driver.FindElement(By.XPath("/html/body/div[2]/div[2]/div[1]/div[1]/div/div[2]/div[2]/div/div/div[2]/div/div/div[1]/div/div/div/div/div[2]/div[3]/div/button"))
-                .Click();
+            (await new Force().AcquireAsync(RoleManagerButton)).Click();
+        }
 
-            WaitForUI();
+        /// <summary>
+        /// Assusmes to be in the server settings
+        /// </summary>
+        public static async Task NavigateMemberTab()
+        {
+            // Go member tab
+            (await new Force().AcquireAsync(MemberTab)).Click();
+        }
+
+        /// <summary>
+        /// Assumes to be on the member tab
+        /// </summary>
+        /// <param name="name"></param>
+        public static async Task SearchUser(string name)
+        {
+            // Enter search bar
+            (await new Force().AcquireAsync(SearchBar)).SendKeys(name);
+        }
+
+        /// <summary>
+        /// Assumes to be in a member search enviroment
+        /// </summary>
+        /// <returns></returns>
+        public static async Task OpenRoleMenu()
+        {
+            (await new Force().AcquireAsync(MemberOptionsButton)).Click();
+            (await new Force().AcquireAsync(MemberOptionsPopup_Button)).Click();
+        }
+
+        /// <summary>
+        /// Assusmes to be in the server settings </br>
+        /// (Does not work with ZeroWidthSpace char)
+        /// </summary>
+        /// <param name="user"></param>
+        /// <param name="role"></param>
+        public static async Task GrantRoles(string user, string name)
+        {
+            await NavigateMemberTab();
+            await SearchUser(user);
+            await OpenRoleMenu();
+
+            foreach (var role in GetAllRolesInRolePopup().Skip(1))
+            {
+                Console.WriteLine(role.name);
+                if (role.name == name) 
+                    new Actions(_driver)
+                        .Click(role.button)
+                        .Perform();
+            }
         }
 
 

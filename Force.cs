@@ -34,16 +34,18 @@ namespace ImageToDiscordRoles
         /// <summary>
         /// In Milliseconds
         /// </summary>
-        public double Interval { get; set; } = 400;
+        public double Interval { get; set; } = 200;
 
         /// <summary>
         /// Tries executes the 
         /// </summary>
-        public async ValueTask<object?> NotAcquireAsync(Action callersFunction)
+        public async ValueTask<object?> NotAcquireAsync(Func<IWebElement> callersFunction)
         {
             _clock.Interval = Interval;
             _clock.Elapsed += (_, _) =>
             {
+                Console.WriteLine("cycle");
+
                 try
                 {
                     callersFunction.Invoke();
@@ -85,7 +87,7 @@ namespace ImageToDiscordRoles
 
 
             OnAcquired += () => _completionSource
-                .SetResult(result ?? throw new NullReferenceException("Internal Error (This is awkward, something unexpected happened)"));
+                .SetResult(result ?? throw new NullReferenceException("Internal Error (This is awkward... :/ something unexpected happened)"));
 
             OnNotAcquired += () => _completionSource
                 .SetResult(null);
@@ -101,11 +103,11 @@ namespace ImageToDiscordRoles
                 result = callersFunction.Invoke();
                 _clock.Stop();
                 OnAcquired?.Invoke();
-                Console.WriteLine("Acquired");
             }
             catch
             {
                 OnFailedToAcquire?.Invoke();
+                Console.WriteLine("Failed to Acquire... trying again...");
             }
 
             if (Ultimatum != null &&
