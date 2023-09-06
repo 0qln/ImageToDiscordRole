@@ -40,17 +40,40 @@ namespace ImageToDiscordRoles
             => parent.FindElements(By.TagName("div")).Where(predicate);
 
 
-        public static IWebElement GetRole(string name)
-            => GetAllRoles().Result.Where(item => GetNameOfRole(item) == name).First();
+        public static IWebElement? GetRole(string name)
+        {
+            List<IWebElement?> roles = GetAllRoles().Result.Where(item => GetNameOfRole(item) == name).ToList();
+            if (roles.Count == 0) return null;
+            return roles.First();
+        }
+        public static async ValueTask<IWebElement?> NextRole(string? name)
+        {
+            foreach (var irole in await GetAllRoles())
+            {
+                Console.WriteLine(GetNameOfRole(irole) + " == " + name);
+
+                if (GetNameOfRole(irole) ==  name)
+                {
+                    return irole;
+                }
+            }
+
+            return null;
+        }
 
         public static IWebElement GetRole(string name, int index)
         {
             return GetAllRoles().Result.Where(item => GetNameOfRole(item) == name).ToList()[index];
         }
 
-        public static string GetNameOfRole(IWebElement role)
-            => role.GetAttribute("aria-label");
+        public static string? GetNameOfRole(IWebElement role)
+        {
+            ArgumentNullException.ThrowIfNull(role);
 
+            string name = role.GetAttribute("aria-label");
+            if (name == "") return null;
+            return name;
+        }
 
         public static IWebElement SelectNewRole()
         {
@@ -81,45 +104,6 @@ namespace ImageToDiscordRoles
         public static bool VerifyLogin(Login login) => new EmailAddressAttribute().IsValid(login);
 
 
-        public static bool TryGetRole(string name, out Func<IWebElement?> role)
-        {
-            IEnumerable<IWebElement> roles;
-            int count, index = 0;
-
-            try
-            {
-                role = () => GetRole(name, index);
-                return true;
-            }
-            catch
-            {
-                role = null;
-                return false;
-            }
-
-            do
-            {
-                try
-                {
-                    role = () => GetRole(name, index);
-                    return true;
-                }
-                catch
-                {
-                    roles = GetAllRoles().Result;
-                    count = roles.Count();
-                    index++;
-                    if (index >= count) index = 0;
-
-                    Console.WriteLine(index);
-
-                    role = null;
-                }
-            }
-            while (count > 0);
-
-            return false;
-        }
 
         public static async Task<IEnumerable<IWebElement>> GetAllRoles()
         {
@@ -128,8 +112,12 @@ namespace ImageToDiscordRoles
                 _driver.FindElement(By
                 .XPath("/html/body/div[2]/div[2]/div[1]/div[1]/div/div[2]/div[2]/div/div/div[2]/div/div/div[1]/div/div[1]/div/div[2]/div[1]")));
 
-            return roleList?.FindElements(By.TagName("div"))
+            var roles = roleList?.FindElements(By.TagName("div"))
                 ?? throw new NullReferenceException("There are no roles on this server.");
+
+            var filteredRoles = roles.Where(x => x.GetAttribute("role") == "tab");
+
+            return filteredRoles;
         }
 
 

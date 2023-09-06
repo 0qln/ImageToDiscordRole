@@ -11,6 +11,11 @@ namespace ImageToDiscordRoles
 {
     public static class DiscordProfile
     {
+        public static class INVISIBLE_COLOR
+        {
+            public const string RAW_DATA = "#232428";
+        }
+
         public static class INVISIBLE_CHAR
         {
             public const string RAW_CHAR = "​";
@@ -21,6 +26,8 @@ namespace ImageToDiscordRoles
         public static class SPACE_CHAR
         {
             public const string RAW_CHAR = " ";
+
+            public const string HTML_REPRESENTATION = null;
         }
 
         public const int MAX_IMAGE_WIDTH = 7;
@@ -41,7 +48,7 @@ namespace ImageToDiscordRoles
         /// <param name="s"></param>
         public static void Write(string s)
         {
-
+            // write a letter
         }
 
         /// <summary>
@@ -50,7 +57,7 @@ namespace ImageToDiscordRoles
         /// </summary>
         public static void DrawSpacing()
         {
-
+            // draw a single big role (wide char)
         }
 
         /// <summary>
@@ -61,10 +68,13 @@ namespace ImageToDiscordRoles
         /// Image has to be 7 pixels wide. Otherwise the final image 
         /// will be corrupted.
         /// </param>
-        public static async void DrawImage(Bitmap image, string profileName)
+        public static async Task DrawImage(Bitmap image, string profileName)
         {
             // clear
             //Discord.DeleteEmptyRoles();
+
+            image.RotateFlip(RotateFlipType.Rotate90FlipXY);
+            image.RotateFlip(RotateFlipType.RotateNoneFlipX);
 
             for (int x = 0; x < image.Width;  x++)
             {
@@ -74,7 +84,7 @@ namespace ImageToDiscordRoles
                     Console.WriteLine(HexConverter(image.GetPixel(x, y)));
                     Console.WriteLine(RGBConverter(image.GetPixel(x, y)));
 
-                    await CreateRole(SPACE_CHAR.RAW_CHAR, color, "Oq_");
+                    await CreateRole(SPACE_CHAR.RAW_CHAR, color, profileName);
                     await SaveChanges();
                 }
             }

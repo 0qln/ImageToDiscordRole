@@ -53,25 +53,23 @@ public static class Program
             await NavigateToServerSettings();
             await NavigateRoleTab();
 
-            Thread.Sleep(1000);
+            await DeleteAllRolesByName(DiscordProfile.SPACE_CHAR.HTML_REPRESENTATION);
 
-            for (int i = 0; i < 10; i++)
-            {
-                await CreateRole("neue Rolle", "#000000");
-            }
-            await CreateRole("[padding] neue Rolle", "#FFFFFF");
-            await SaveChanges();
+            await DrawImage(new Bitmap(@"D:\Programmmieren\Projects\ImageToDiscordRoles\cat.png"), "Oq_");
 
-            await DeleteAllRolesByName("neue Rolle");
-
-            //DrawImage(new Bitmap(@"D:\Programmmieren\Projects\ImageToDiscordRoles\cat.png"), "Oq_");
-
-            Console.WriteLine("Application finished executing. (Press any key to exit)"); Console.Read();
+            await Success();
         }
         finally
         {
             Driver.Dispose();
         }
+    }
+
+    public static async Task Success()
+    {
+        Console.WriteLine("Application finished executing succesfully. " +
+            "(Press any key to exit)"); 
+        Console.Read();
     }
 
 }

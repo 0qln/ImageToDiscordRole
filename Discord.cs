@@ -22,8 +22,36 @@ namespace ImageToDiscordRoles
         /// Expects the discord to be in the role settings.
         /// </summary>
         /// <param name="element"></param>
-        private static async void DeleteRole(IWebElement element)
+        private static async Task DeleteRole(IWebElement element)
         {
+            try
+            {
+                // Bring up popup
+                new Actions(_driver).ContextClick(element).Perform();
+
+                // Click delete
+                var e = (await new Force().AcquireAsync(RoleDeletion));
+                Thread.Sleep(100);
+                e.Click();
+
+                // Confirm deletion
+                (await new Force().AcquireAsync(RoleDeletionConfirmation)).Click();
+            }
+            catch
+            {
+                Console.WriteLine("Failed to delete role");
+            }
+        }
+
+        /// <summary>
+        /// Delete a role.
+        /// Expects the discord to be in the role settings.
+        /// </summary>
+        /// <param name="callersElement"></param>
+        private static async void DeleteRole(Func<IWebElement> callersElement)
+        {
+            var element = callersElement.Invoke();
+
             // Bring up popup
             new Actions(_driver).ContextClick(element).Perform();
 
@@ -123,7 +151,14 @@ namespace ImageToDiscordRoles
         public static async Task SaveChanges()
         {
             // Save
-            (await new Force().AcquireAsync(SaveButton)).Click();
+            try
+            {
+                (await new Force().AcquireAsync(SaveButton)).Click();
+            }
+            catch
+            {
+                Console.WriteLine("Failed to save changes.");
+            }
 
             // Wait until the changes have been saved
             await new Force().NotAcquireAsync(SavePopup);
@@ -143,9 +178,10 @@ namespace ImageToDiscordRoles
 
             // set name
             var nameElement = (await new Force().AcquireAsync(RoleSettingsName)).GetFirstChildInput();
-            Thread.Sleep(50);
+            Thread.Sleep(500);
             nameElement.Clear();
-            Thread.Sleep(50);
+            Thread.Sleep(500);
+            //nameElement.SendKeys(name);
             nameElement.SetValue(name);
 
             // Open color setter
@@ -192,18 +228,16 @@ namespace ImageToDiscordRoles
         /// <summary>
         /// Expects to be navigated on the role tab.
         /// </summary>
-        public static async Task DeleteAllRolesByName(string name)
+        public static async Task DeleteAllRolesByName(string? name)
         {
-
-            while (TryGetRole(name, out Func<IWebElement?> element))
+            IWebElement? element;
+            while ((element = NextRole(name).Result) is not null)
             {
-                if (element is not null) DeleteRole(element.Invoke());
-
-                //Thread.Sleep(1000);
-
-                await new Force().NotAcquireAsync(element);
+                await DeleteRole(element);
 
                 // Wait for element to get deleted
+                Thread.Sleep(1100);
+                //await new Force().NotAcquireAsync(element);
                 //await new Force().NotAcquireAsync(new Func<IWebElement>(() => EnsureElement(element)));
             }
         }

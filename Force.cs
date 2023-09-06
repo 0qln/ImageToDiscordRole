@@ -44,8 +44,6 @@ namespace ImageToDiscordRoles
             _clock.Interval = Interval;
             _clock.Elapsed += (_, _) =>
             {
-                Console.WriteLine("cycle");
-
                 try
                 {
                     callersFunction.Invoke();
