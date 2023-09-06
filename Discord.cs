@@ -157,7 +157,9 @@ namespace ImageToDiscordRoles
             }
             catch
             {
-                Console.WriteLine("Failed to save changes.");
+                Console.WriteLine(
+                    "Failed to save changes. There might be other processes waiting for the changes to get saved. " +
+                    "Try clicking the `Save Changes` button manually in the UI.");
             }
 
             // Wait until the changes have been saved
@@ -178,10 +180,13 @@ namespace ImageToDiscordRoles
 
             // set name
             var nameElement = (await new Force().AcquireAsync(RoleSettingsName)).GetFirstChildInput();
-            Thread.Sleep(500);
-            nameElement.Clear();
-            Thread.Sleep(500);
-            //nameElement.SendKeys(name);
+            // give the ui time to load the text, before checking if the value is still empty
+            Thread.Sleep(100);
+            while (nameElement.GetAttribute("value") != "")
+            {
+                nameElement.SendKeys(Keys.Backspace);
+                Thread.Sleep(1);
+            }
             nameElement.SetValue(name);
 
             // Open color setter

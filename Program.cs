@@ -53,7 +53,7 @@ public static class Program
             await NavigateToServerSettings();
             await NavigateRoleTab();
 
-            await DeleteAllRolesByName(DiscordProfile.SPACE_CHAR.HTML_REPRESENTATION);
+            //await DeleteAllRolesByName(DiscordProfile.SPACE_CHAR.HTML_REPRESENTATION);
 
             await DrawImage(new Bitmap(@"D:\Programmmieren\Projects\ImageToDiscordRoles\cat.png"), "Oq_");
 

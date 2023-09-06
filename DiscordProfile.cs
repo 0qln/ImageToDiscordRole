@@ -73,21 +73,22 @@ namespace ImageToDiscordRoles
             // clear
             //Discord.DeleteEmptyRoles();
 
-            image.RotateFlip(RotateFlipType.Rotate90FlipXY);
-            image.RotateFlip(RotateFlipType.RotateNoneFlipX);
+            //image.RotateFlip(RotateFlipType.Rotate90FlipXY);
+            //image.RotateFlip(RotateFlipType.RotateNoneFlipX);
 
-            for (int x = 0; x < image.Width;  x++)
+            for (int y = 0; y < image.Height;  y++)
             {
-                for (int y = 0; y < image.Height; y++)
+                for (int x = 0; x < image.Width; x++)
                 {
                     var color = HexConverter(image.GetPixel(x, y));
                     Console.WriteLine(HexConverter(image.GetPixel(x, y)));
                     Console.WriteLine(RGBConverter(image.GetPixel(x, y)));
 
                     await CreateRole(SPACE_CHAR.RAW_CHAR, color, profileName);
-                    await SaveChanges();
                 }
             }
+
+            await SaveChanges();
         }
         private static String HexConverter(System.Drawing.Color c)
         {
