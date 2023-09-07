@@ -158,7 +158,7 @@ namespace ImageToDiscordRoles
             catch
             {
                 Console.WriteLine(
-                    "Failed to save changes. There might be other processes waiting for the changes to get saved. " +
+                    "Failed to save changes. There might be other tasks waiting for the changes to get saved. " +
                     "Try clicking the `Save Changes` button manually in the UI.");
             }
 
@@ -175,13 +175,30 @@ namespace ImageToDiscordRoles
         /// <exception cref="NullReferenceException"></exception>
         public static async Task CreateRole(string name, string color, string? grantToUser = null)
         {
-            // Open the role settings
-            (await new Force().AcquireAsync(AddRoleButton)).Click();
+            // Add new role
+            try
+            {
+                (await new Force().AcquireAsync(AddRoleButton)).Click();
+            }
+            catch (Exception ex1)
+            {
+                Console.WriteLine("Failed to press the `Create new role` button due to an unknown issue.");
+                Console.WriteLine($"Error message: {ex1}\n");
+                Console.WriteLine("Would you like to try again, throw, or abort the creation of the new role and continue with the rest of the code? " +
+                    "[1 {recommended} / 2 / 3]");
+
+                switch (Console.ReadLine())
+                {
+                    case "1": (await new Force().AcquireAsync(AddRoleButton)).Click(); break;
+                    case "2": throw;
+                    case "3": return;
+                }
+            }
 
             // set name
             var nameElement = (await new Force().AcquireAsync(RoleSettingsName)).GetFirstChildInput();
             // give the ui time to load the text, before checking if the value is still empty
-            Thread.Sleep(100);
+            Thread.Sleep(150);
             while (nameElement.GetAttribute("value") != "")
             {
                 nameElement.SendKeys(Keys.Backspace);
@@ -216,7 +233,21 @@ namespace ImageToDiscordRoles
                 (await new Force().AcquireAsync(RoleSettingsMemberTabPopupSearchbarFirstHit)).Click();
 
                 // confirm
-                (await new Force().AcquireAsync(RoleSettingsMemberTabPopupSearchbarConfirm)).Click();
+                var confimationButton = await new Force().AcquireAsync(RoleSettingsMemberTabPopupSearchbarConfirm);
+                confimationButton.Click();
+
+                // while the searchbar is up, the confirmation failed
+                var confirmationForce = new Force(); 
+                confirmationForce.OnAcquired += delegate
+                {
+                    Console.WriteLine("Discord failed to confirm... trying again...");
+                    confimationButton.Click();
+                };
+                confirmationForce.OnNotAcquired += delegate
+                {
+                    Console.WriteLine("Discord confirmed succesfully.");
+                };
+                await confirmationForce.NotAcquireAsync(RoleSettingsMemberTabPopupSearchbar);
             }
         }
 
