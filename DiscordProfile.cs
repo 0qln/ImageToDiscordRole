@@ -68,14 +68,8 @@ namespace ImageToDiscordRoles
         /// Image has to be 7 pixels wide. Otherwise the final image 
         /// will be corrupted.
         /// </param>
-        public static async Task DrawImage(Bitmap image, string profileName)
+        public static async Task DrawImage(Bitmap image, params string[] profileNames)
         {
-            // clear
-            //Discord.DeleteEmptyRoles();
-
-            //image.RotateFlip(RotateFlipType.Rotate90FlipXY);
-            //image.RotateFlip(RotateFlipType.RotateNoneFlipX);
-
             for (int y = 0; y < image.Height;  y++)
             {
                 for (int x = 0; x < image.Width; x++)
@@ -84,12 +78,19 @@ namespace ImageToDiscordRoles
                     Console.WriteLine(HexConverter(image.GetPixel(x, y)));
                     Console.WriteLine(RGBConverter(image.GetPixel(x, y)));
 
-                    await CreateRole(SPACE_CHAR.RAW_CHAR, color, profileName);
+                    await CreateRole(SPACE_CHAR.RAW_CHAR, color);
+
+                    await NavigateMemberTab_Roles();
+
+                    foreach (var name in profileNames)
+                    {
+                        await GrantRoleImmediatly(name);
+                    }
                 }
             }
-
-            await SaveChanges();
         }
+
+
         private static String HexConverter(System.Drawing.Color c)
         {
             return "#" + c.R.ToString("X2") + c.G.ToString("X2") + c.B.ToString("X2");

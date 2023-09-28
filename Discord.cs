@@ -173,7 +173,7 @@ namespace ImageToDiscordRoles
         /// <param name="color"></param>
         /// <returns></returns>
         /// <exception cref="NullReferenceException"></exception>
-        public static async Task CreateRole(string name, string color, string? grantToUser = null)
+        public static async Task CreateRole(string name, string color)
         {
             // Add new role
             try
@@ -214,15 +214,18 @@ namespace ImageToDiscordRoles
             colorSetterElement.Clear();
             colorSetterElement.SetValue(color);
             colorSetterElement.SendKeys(Keys.Enter);
+        }
 
-            //await SaveChanges();
+        public static async Task NavigateMemberTab_Roles()
+        {
+            // Go member tab
+            (await new Force().AcquireAsync(RoleSettingsMemberTabFromVisualsTab)).Click();
+        }
 
-            // grant the role immediatly to a user
+        public static async Task GrantRoleImmediatly(string? grantToUser)
+        {
             if (grantToUser is not null)
             {
-                // Go member tab
-                (await new Force().AcquireAsync(RoleSettingsMemberTabFromVisualsTab)).Click();
-
                 // press add
                 (await new Force().AcquireAsync(RoleSettingsMemberTabAdd)).Click();
 
@@ -237,7 +240,7 @@ namespace ImageToDiscordRoles
                 confimationButton.Click();
 
                 // while the searchbar is up, the confirmation failed
-                var confirmationForce = new Force(); 
+                var confirmationForce = new Force();
                 confirmationForce.OnAcquired += delegate
                 {
                     Console.WriteLine("Discord failed to confirm... trying again...");

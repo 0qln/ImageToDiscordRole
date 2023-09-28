@@ -49,15 +49,15 @@ public static class Program
             await Login(GatherUserLogin());
             Console.WriteLine("Continue");
 
-            NavigateToServer("Server von Oq_ djwhkakjd");
-            //NavigateToServer("Autismus Clan");
+            //NavigateToServer("Server von Oq_ djwhkakjd");
+            NavigateToServer("Autismus Clan");
             await NavigateToServerSettings();
             await NavigateRoleTab();
 
-            await DeleteAllRolesByName(DiscordProfile.SPACE_CHAR.HTML_REPRESENTATION);
-            await DeleteAllRolesByName("neue Rolle");
+            //await DeleteAllRolesByName(DiscordProfile.SPACE_CHAR.HTML_REPRESENTATION);
+            //await DeleteAllRolesByName("neue Rolle");
 
-            //await DrawImage(new Bitmap(@"D:\Programmmieren\Projects\ImageToDiscordRoles\cat.png"), "Oq_");
+            await DrawImage(new Bitmap(@"D:\Programmmieren\Projects\ImageToDiscordRoles\cat.png"), "derpinguinboss", "oq_");
 
             await Success();
         }
